@@ -240,7 +240,6 @@ import asyncio, struct
 from aiogibson import encode_command
 
 async def create_connection(host, port, *, loop=None):
-    OP_CODE_SIZE = 2
     reader, writer = await asyncio.open_connection(
     host, port, loop=loop)
 
