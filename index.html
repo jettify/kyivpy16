@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>jettify</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/white.css" id="theme">
+		<link rel="stylesheet" href="css/my.css">
+		<!-- Code syntax highlighting -->
+        <link class="codestyle" rel="stylesheet" href="css/tomorrow.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+<!-- ####################################################################  -->
+                <section id="about_me" class="aboutme slide present" style="top: 176px; display: block;">
+
+                    <img src='images/ava5.png'>
+                    <h1></h1>
+					<h4>How to deal with blocking code within asyncio event loop</h4>
+					<p> Nikolay Novik</p>
+					<p>
+						<small> <a href="http://github.com/jettify">http://github.com/jettify</a></small>
+					</p>
+
+
+				</section>
+
+<!-- ####################################################################  -->
+				<section data-markdown>
+                    ## I am ...
+                    * **Software Engineer**: at DataRobot Ukraine
+                    * **Github**: http://github.com/jettify
+                    * **My Projects**:
+                        + database clients:
+                            - `aiomysql`, `aioobc`, `aiogibson`
+                        + web and etc:
+                            - `aiohttp_debugtoolbar`, `aiobotocore`, `aiohttp_mako`, `aiohttp_sse`, `aiogearman`
+				</section>
+
+<!-- ####################################################################  -->
+				<section data-markdown>
+                    ## Poll
+                    ##### You and asyncio:
+                    1. I have used asyncio extensively 
+                    2. I have used Twisted, Tornado, etc. extensively
+                    3. I have played with async programming
+				</section>
+<!-- ####################################################################  -->
+                <section data-markdown>
+                    ## Asyncio
+                    * The asyncio project was officially launched with the
+                      release of Python 3.4 in March 2014.
+                    * Bare: almost no library
+                    * One year later, asyncio has a strong community writing
+                      libraries on top of it.
+
+
+                    But what to do when required available libraries work in
+                    sync way, potentially blocking event loop?
+                </section>
+<!-- ####################################################################  -->
+				<section>
+					<section>
+						<h2>Rules of Async Club</h2>
+						<h4>Rule #1</h2>
+						<p>You do not block event loop</p>
+						<h4>Rule #2</h2>
+						<p>You never block event loop</p>
+					</section>
+				</section>
+
+<!-- ####################################################################  -->
+				<section data-markdown>
+                    ### Blocking calls in third party libraries 
+                    * Network IO
+                        - API wrappers 
+                        - Database clients
+                        - Message queues
+                    * FileSystem IO
+                    * CPU
+				</section>
+<!-- ####################################################################  -->
+				<section>
+                    <h3>Debugging blocking calls tip</h3>
+                    Set environment variable <code>PYTHONASYNCIODEBUG=1</code>
+					<pre><code class="hljs python" data-trim>
+import asyncio
+import time
+
+loop = asyncio.get_event_loop()
+loop.slow_callback_duration = 0.01
+
+async def sleeper():
+    time.sleep(0.1)  # we block here
+
+loop.run_until_complete(sleeper())
+					</code></pre>
+					<pre><code class="hljs python" data-trim>
+
+Executing &lt;Task finished coro=&lt;sleeper() done, defined at
+code/debug_example.py:9&gt; result=None created at
+/usr/local/lib/python3.5/asyncio/base_events.py:323&gt;
+took 0.102 seconds
+					</code></pre>
+                    <code>
+                    </code>
+				</section>
+
+<!-- ####################################################################  -->
+				<section data-markdown>
+                    ### Approach #1 Is there any suitable library? 
+                    Search asyncio compatible library on:
+                    1. google ~ 98k results
+                    2. pypi ~200 packages
+                    3. asyncio third party libraries wiki page
+                    4. aio-libs github organisation
+
+				</section>
+<!-- ####################################################################  -->
+                <section>
+                    <h5>Third Party Libraries Pro Tip</h5>
+                    Read the (f*g) source code of your libraries! Example
+                    of python code from OneDrive SDK
+					<pre><code class="hljs python" data-trim>
+@asyncio.coroutine
+def get_async(self):
+    """Sends the GET request using an asyncio coroutine
+    .... 
+    """
+    future = self._client._loop.run_in_executor(None,
+                                                self.get)
+    collection_response = yield from future
+    return collection_response
+					</code></pre>
+                    Most of the time you want to do HTTP requests using event
+                    loop not thread pool.
+                </section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    <h3>Approach #2 Is REST API available?</h3>
+                    Most hipsters databases use REST API as primary access
+                    method:
+                    <p>
+                    <ul>
+                        <li>DynamoDB</li>
+                        <li>Neo4j</li>
+                        <li>Elasticsearch</li>
+                        <li>HBase</li>
+                        <li>HDFS</li>
+                    </ul> <ul>
+                        <li>CouchDB</li>
+                        <li>Riak</li>
+                        <li>VoltDB</li>
+                        <li>InfluxDB</li>
+                        <li>ArangoDB</li>
+                    </ul>
+                    </p>
+                    Easy to implement required subset of APIs.
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    <h5>REST Client Tip</h5>
+                    <code>aiohttp.ClientSession</code> is your friend
+					<pre><code class="hljs python" data-trim>
+import asyncio
+import aiohttp
+
+# carry the loop Luke!
+loop = asyncio.get_event_loop()
+
+async def go():
+    # works only with master branch of aiohttp
+    session = aiohttp.ClientSession(loop=loop)
+    async with session.get('http://python.org') as resp:
+        data = await resp.text()
+        print(data)
+    session.close()
+
+loop.run_until_complete(go())
+					</code></pre>
+                Connection pooling helps to save on expensive connection
+                creation.
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    <h3>Approach #3 Is there simple text or binary protocol?</h3>
+                    <p>Example of databases and message queues with binary protocol:</p>
+                    <ul>
+                        <li>redis</li>
+                        <li>memcached</li>
+                        <li>couchebase</li>
+                        <li>gibson</li>
+                        <li>grearman</li>
+                        <li>beanstalkd</li>
+                        <li>disque</li>
+                    </ul>
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    Example: Simple binary protocol implementation 
+					<pre><code class="hljs python" data-trim>
+import asyncio, struct
+from aiogibson import encode_command
+
+async def create_connection(host, port, *, loop=None):
+    OP_CODE_SIZE = 2
+    reader, writer = await asyncio.open_connection(
+    host, port, loop=loop)
+
+    cmd = encode_command(b'GET', 'key')
+    writer.write(cmd)
+    
+    header = await reader.readexactly(4 + 2 + 1)
+    unpacked = struct.unpack(b'&ltHBI', header)
+    code, gb_encoding, resp_size = unpacked
+    payload = await reader.read(resp_size)
+    print(payload)
+					</code></pre>
+
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    <h3>Protocol Pipelining</h3>
+                    Most binary protocols support pipelining, it is very easy
+                    implement with asyncio
+                    <img data-src="images/pipelining2.svg">
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    Example: Simple pipelined binary protocol implementation 
+					<pre><code class="hljs python" data-trim>
+def execute(self):
+    cmd = encode_command(b'GET', 'key')
+    self.writer.write(cmd)
+    fut = asyncio.Future(loop=self._loop)
+    self._queue.append(fut)
+    return fut
+
+async def reader_task(self):
+    while True:
+        header = await self.reader.readexactly(4 + 2 + 1)
+        unpacked = struct.unpack(b'&ltHBI', header)
+        code, gb_encoding, resp_size = unpacked
+        # wait and read payload
+        payload = await reader.readexactly(resp_size)
+        future = self._queue.pop()
+        future.set_result(payload)
+					</code></pre>
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    <h4>Approach #4 Is Sync Python Client available?</h4>
+                    In good sync database clients IO decoupled from protocol
+                    parsers why not just rewrite IO part?
+                    <ol>
+                        <li> Locate <b>socket.recv()</b></li>
+                        <li> Replace with <b>await reader.read()</b></li>
+                        <li> Make function coroutine with <b>async def</b></li>
+                        <li> Call this function with <b>await</b> </li>
+                        <li> Call parent functions with <b>await</b> </li>
+                    </ol>
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    <h3>Approach #5 Is there universal solution to all problems?</h3>
+                    Yes. Make every blocking call in separate thread
+					<pre><code class="hljs python" data-trim>
+import asyncio
+from pyodbc import connect
+
+loop = asyncio.get_event_loop()
+executor = ThreadPoolExecutor(max_workers=4)
+async def test_example():
+    dsn = 'Driver=SQLite;Database=sqlite.db'
+    conn = await loop.run_in_executor(executor, connect, dsn)
+    cursor = await loop.run_in_executor(executor, conn.cursor)
+    conn = await loop.run_in_executor(executor, cursor.execute,
+                                      'SELECT 42;')
+
+loop.run_until_complete(test_example())
+					</code></pre>
+				</section>
+
+<!-- ####################################################################  -->
+
+				<section>
+                    <h3>What about FileSystem IO?</h3>
+                    <p>asyncio does not support asynchronous operations on the
+                    filesystem due to OS limitations. </p>
+                    Only good way to use
+                    files asynchronously by using thread pools.
+				</section>
+<!-- ####################################################################  -->
+				<section>
+                    <p><code>aiofiles</code> library workaround</p>
+
+					<pre><code class="hljs python" data-trim>
+async def go():
+    f = await aiofiles.open('filename', mode='r')
+    try:
+        data = await f.read()
+    finally:
+        await f.close()
+    print(data)
+loop.run_until_complete(go())
+					</code></pre>
+                    On background <code>aiofiles</code> uses ThreadPoolExecutor
+                    for blocking calls.
+				</section>
+<!-- ####################################################################  -->
+
+				<section>
+                    <h3>What about CPU intensive task?</h3>
+					<pre><code class="hljs python" data-trim>
+loop = asyncio.get_event_loop()
+executor = ProcessPoolExecutor(max_workers=3)
+
+def is_prime(n):
+    if n % 2 == 0: return False
+    sqrt_n = int(math.floor(math.sqrt(n)))
+    for i in range(3, sqrt_n + 1, 2):
+        if n % i == 0: return False
+    return True
+
+async def go():
+    n = 112272535095293
+    result = await loop.run_in_executor(executor, is_prime, n)
+loop.run_until_complete(go(loop, executor))
+
+					</code></pre>
+				</section>
+
+<!-- ####################################################################  -->
+				<section>
+                    <h3>Thanks!</h3>
+                    Questions?
+				</section>
+<!-- ####################################################################  -->
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
