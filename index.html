@@ -63,7 +63,7 @@
                         + database clients:
                             - `aiomysql`, `aioobc`, `aiogibson`
                         + web and etc:
-                            - `aiohttp_debugtoolbar`, `aiobotocore`, `aiohttp_mako`, `aiohttp_sse`, `aiogearman`
+                            - `aiohttp_debugtoolbar`, `aiobotocore`, `aiohttp_mako`, `aiohttp_sse`, `aiogearman`, `aiomysql_replicatoin`
 				</section>
 
 <!-- ####################################################################  -->
@@ -224,11 +224,13 @@ loop.run_until_complete(go())
                         <li>redis</li>
                         <li>memcached</li>
                         <li>couchebase</li>
-                        <li>gibson</li>
+                    </ul>
+                    <ul>
                         <li>grearman</li>
                         <li>beanstalkd</li>
                         <li>disque</li>
                     </ul>
+                    <p>With asyncio it is very easy to implement.</p>
 				</section>
 
 <!-- ####################################################################  -->
@@ -249,7 +251,7 @@ async def create_connection(host, port, *, loop=None):
     header = await reader.readexactly(4 + 2 + 1)
     unpacked = struct.unpack(b'&ltHBI', header)
     code, gb_encoding, resp_size = unpacked
-    payload = await reader.read(resp_size)
+    payload = await reader.readexactly(resp_size)
     print(payload)
 					</code></pre>
 
@@ -286,6 +288,7 @@ async def reader_task(self):
         future = self._queue.pop()
         future.set_result(payload)
 					</code></pre>
+                    See <code>aioredis</code> for full example implementation.
 				</section>
 
 <!-- ####################################################################  -->
