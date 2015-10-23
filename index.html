@@ -70,9 +70,9 @@
 				<section data-markdown>
                     ## Poll
                     ##### You and asyncio:
-                    1. I have used asyncio extensively 
-                    2. I have used Twisted, Tornado, etc. extensively
-                    3. I have played with async programming
+                    1. I am using asyncio extensively 
+                    2. I am using Twisted, Tornado, gevent etc. extensively
+                    3. I think async programming is kinda cool 
 				</section>
 <!-- ####################################################################  -->
                 <section data-markdown>
@@ -82,7 +82,6 @@
                     * Bare: almost no library
                     * One year later, asyncio has a strong community writing
                       libraries on top of it.
-
 
                     But what to do when available libraries work in
                     sync way, potentially blocking event loop?
@@ -141,8 +140,8 @@ took 0.102 seconds
                     Search asyncio compatible library on:
                     1. google ~ 98k results
                     2. pypi ~200 packages
-                    3. asyncio third party libraries wiki page
-                    4. aio-libs github organisation
+                    3. asyncio wiki page: https://github.com/python/asyncio/wiki/ThirdParty 
+                    4. aio-libs: https://github.com/aio-libs 
 
 				</section>
 <!-- ####################################################################  -->
@@ -202,7 +201,6 @@ import aiohttp
 loop = asyncio.get_event_loop()
 
 async def go():
-    # works only with master branch of aiohttp
     session = aiohttp.ClientSession(loop=loop)
     async with session.get('http://python.org') as resp:
         data = await resp.text()
@@ -230,7 +228,7 @@ loop.run_until_complete(go())
                         <li>beanstalkd</li>
                         <li>disque</li>
                     </ul>
-                    <p>With asyncio it is very easy to implement.</p>
+                    <p>Do not afraid to get your hands dirty.</p>
 				</section>
 
 <!-- ####################################################################  -->
@@ -254,16 +252,17 @@ async def read_from_connection(host, port, *, loop=None):
     payload = await reader.readexactly(resp_size)
     print(payload)
 					</code></pre>
-
+                Simple but no protocol pipelining.
 				</section>
 
 <!-- ####################################################################  -->
 
 				<section>
                     <h3>Protocol Pipelining</h3>
-                    Most binary protocols support pipelining, it is very easy
-                    implement with asyncio
-                    <img data-src="images/pipelining2.svg">
+                    Most binary protocols support pipelining
+                    <img data-src="images/pipe2.svg">
+                More info: http://tailhook.github.io/request-pipelining-presentation/
+                presentation/index.html
 				</section>
 
 <!-- ####################################################################  -->
@@ -400,9 +399,8 @@ loop.run_until_complete(go(loop, executor))
 				</section>
 
 <!-- ####################################################################  -->
-				<section>
+<section style="text-align: left;" data-background="images/dr.png" data-state="img-right">
                     <h3>Thanks!</h3>
-                    Questions?
 				</section>
 <!-- ####################################################################  -->
 			</div>
