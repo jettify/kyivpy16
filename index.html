@@ -84,7 +84,7 @@
                       libraries on top of it.
 
 
-                    But what to do when required available libraries work in
+                    But what to do when available libraries work in
                     sync way, potentially blocking event loop?
                 </section>
 <!-- ####################################################################  -->
@@ -241,7 +241,7 @@ loop.run_until_complete(go())
 import asyncio, struct
 from aiogibson import encode_command
 
-async def create_connection(host, port, *, loop=None):
+async def read_from_connection(host, port, *, loop=None):
     reader, writer = await asyncio.open_connection(
     host, port, loop=loop)
 
@@ -288,7 +288,7 @@ async def reader_task(self):
         future = self._queue.pop()
         future.set_result(payload)
 					</code></pre>
-                    See <code>aioredis</code> for full example implementation.
+                    See <code>aioredis</code> for reference implementation.
 				</section>
 
 <!-- ####################################################################  -->
@@ -325,6 +325,28 @@ async def test_example():
                                       'SELECT 42;')
 
 loop.run_until_complete(test_example())
+					</code></pre>
+				</section>
+<!-- ####################################################################  -->
+
+				<section>
+                    <h3>But how I know which method to call in thread?</h3>
+                    For python code
+					<pre><code class="hljs python" data-trim>
+requests.get()
+					</code></pre>
+                    For Cython
+					<pre><code class="hljs python" data-trim>
+with nogil:
+    [code to be executed with the GIL released]
+					</code></pre>
+                    <p>For C extension</p>
+					<pre><code class="hljs python" data-trim>
+Py_BEGIN_ALLOW_THREADS
+ret = SQLDriverConnect(hdbc, 0, szConnect, SQL_NTS,
+                       0, 0, 0, SQL_DRIVER_NOPROMPT);
+Py_END_ALLOW_THREADS
+
 					</code></pre>
 				</section>
 
