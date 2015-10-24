@@ -24,3 +24,9 @@ body {
   height: 568;
   border-radius: 1px; }
 
+html.img-right div.slide-background.present {
+    background-position: right;
+}
+.aboutme2 h3 {
+  position:relative;
+  }
